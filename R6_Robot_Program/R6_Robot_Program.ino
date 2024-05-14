@@ -98,31 +98,312 @@ bool g_dxl_is_connected[DXL_CNT+1];             // Dynamixelが接続されて�
 
 /*Dynamixelの速度，加速度の設定*/
 void set_accel_velocity(){
-
-}
-/*モーションの配置*/
-void forward(){
-  int foward_poster_cnt = 3; // 動作の数を入力
-  int foward_poster[foward_poster_cnt][DXL_CNT] = { //モータ角度
-    {512,512,512,512,512},
-    {256,256,256,256,256},
-    {128,128,128,128,128}
-  };
-  int foward_poster_delay[foward_poster_cnt] ={200, 200, 200 }; //動作間の時間
-
-  if(g_torque_is_on)
+  for (int dxl_i = 1; dxl_i <= DXL_CNT; dxl_i++)
   {
-    set_accel_velocity();
-    while( ; ;){
-      
+    if (!g_dxl_is_connected[dxl_i])
+    {
+      continue;
+    }
+    if (1.5 <= DXL_PROTOCOL_VERSION)
+    {
+      dxl.writeControlTableItem(PROFILE_VELOCITY, dxl_i, g_dxl_present_velocities[dxl_i]);
+      dxl.writeControlTableItem(PROFILE_ACCELERATION, dxl_i, g_dxl_present_accelerations[dxl_i]);
+    }
+    else
+    {
+      dxl.writeControlTableItem(MOVING_SPEED, dxl_i, g_dxl_present_velocities[dxl_i]);
     }
   }
+  return ;
 }
-void back(){}
-void left(){}
-void right(){}
-void leftturn(){}
-void rightturn(){}
+/*モーションの配置*/
+void forward()
+{
+  int forward_poster_cnt = 3;                        // 動作の数を入力
+  int forward_poster[forward_poster_cnt][DXL_CNT] = {// モータ角度
+                                                     {512, 512, 512, 512, 512},
+                                                     {256, 256, 256, 256, 256},
+                                                     {128, 128, 128, 128, 128}};
+  int forward_poster_delay[forward_poster_cnt] = {200, 200, 200}; // 動作間の時間
+
+  // トルクONの時の動作(速度・加速度の設定->コマンドの入力の有無の判断->動作)
+  if (g_torque_is_on)
+  {
+    set_accel_velocity();
+    while (0)
+    {
+      for (int pos_i = 1; pos_i <= forward_poster_cnt; pos_i++)
+      {
+        if (0 < USB_SERIAL.available() || 0 < BT_SERIAL.available())
+        { // シリアル入力がある場合は動作を停止
+          return;
+        }
+        else
+        { 
+          for (int dxl_i = 1; dxl_i <= DXL_CNT; dxl_i++)
+          {
+            g_dxl_pos[dxl_i] = forward_poster[pos_i][dxl_i];
+            dxl.setGoalPosition(dxl_i, forward_poster[pos_i][dxl_i]);
+          }
+          delay(forward_poster_delay[pos_i]);
+        }
+      }
+    }
+  }
+  else
+  {
+    for (int dxl_i = 1; dxl_i <= DXL_CNT; dxl_i++)
+    {
+      if (!g_dxl_is_connected[dxl_i])
+      {
+        continue;
+      }
+      g_dxl_pos[dxl_i] = constrain(uint16_t(dxl.getPresentPosition(dxl_i)), DXL_MIN_POSITION_VALUE, DXL_MAX_POSITION_VALUE);
+    }
+  }
+  g_cmd_word = '\0';
+  delay(5);
+}
+
+void back()
+{
+  int back_poster_cnt = 3;                     // 動作の数を入力
+  int back_poster[back_poster_cnt][DXL_CNT] = {// モータ角度
+                                               {512, 512, 512, 512, 512},
+                                               {256, 256, 256, 256, 256},
+                                               {128, 128, 128, 128, 128}};
+  int back_poster_delay[back_poster_cnt] = {200, 200, 200}; // 動作間の時間
+
+  // トルクONの時の動作(速度・加速度の設定->コマンドの入力の有無の判断->動作)
+  if (g_torque_is_on)
+  {
+    set_accel_velocity();
+    while (0)
+    {
+      for (int pos_i = 1; pos_i <= back_poster_cnt; pos_i++)
+      {
+        if (0 < USB_SERIAL.available() || 0 < BT_SERIAL.available())
+        { // シリアル入力がある場合は動作を停止
+          return;
+        }
+        else
+        { 
+          for (int dxl_i = 1; dxl_i <= DXL_CNT; dxl_i++)
+          {
+            g_dxl_pos[dxl_i] = back_poster[pos_i][dxl_i];
+            dxl.setGoalPosition(dxl_i, back_poster[pos_i][dxl_i]);
+          }
+          delay(back_poster_delay[pos_i]);
+        }
+      }
+    }
+  }
+  else
+  {
+    for (int dxl_i = 1; dxl_i <= DXL_CNT; dxl_i++)
+    {
+      if (!g_dxl_is_connected[dxl_i])
+      {
+        continue;
+      }
+      g_dxl_pos[dxl_i] = constrain(uint16_t(dxl.getPresentPosition(dxl_i)), DXL_MIN_POSITION_VALUE, DXL_MAX_POSITION_VALUE);
+    }
+  }
+  g_cmd_word = '\0';
+  delay(5);
+}
+
+void left()
+{
+  int left_poster_cnt = 3;                     // 動作の数を入力
+  int left_poster[left_poster_cnt][DXL_CNT] = {// モータ角度
+                                               {512, 512, 512, 512, 512},
+                                               {256, 256, 256, 256, 256},
+                                               {128, 128, 128, 128, 128}};
+  int left_poster_delay[left_poster_cnt] = {200, 200, 200}; // 動作間の時間
+
+  // トルクONの時の動作(速度・加速度の設定->コマンドの入力の有無の判断->動作)
+  if (g_torque_is_on)
+  {
+    set_accel_velocity();
+    while (0)
+    {
+      for (int pos_i = 1; pos_i <= left_poster_cnt; pos_i++)
+      {
+        if (0 < USB_SERIAL.available() || 0 < BT_SERIAL.available())
+        { // シリアル入力がある場合は動作を停止
+          return;
+        }
+        else
+        { //
+          for (int dxl_i = 1; dxl_i <= DXL_CNT; dxl_i++)
+          {
+            g_dxl_pos[dxl_i] = left_poster[pos_i][dxl_i];
+            dxl.setGoalPosition(dxl_i, left_poster[pos_i][dxl_i]);
+          }
+          delay(left_poster_delay[pos_i]);
+        }
+      }
+    }
+  }
+  else
+  {
+    for (int dxl_i = 1; dxl_i <= DXL_CNT; dxl_i++)
+    {
+      if (!g_dxl_is_connected[dxl_i])
+      {
+        continue;
+      }
+      g_dxl_pos[dxl_i] = constrain(uint16_t(dxl.getPresentPosition(dxl_i)), DXL_MIN_POSITION_VALUE, DXL_MAX_POSITION_VALUE);
+    }
+  }
+  g_cmd_word = '\0';
+  delay(5);
+}
+
+void right()
+{
+  int right_poster_cnt = 3;                      // 動作の数を入力
+  int right_poster[right_poster_cnt][DXL_CNT] = {// モータ角度
+                                                 {512, 512, 512, 512, 512},
+                                                 {256, 256, 256, 256, 256},
+                                                 {128, 128, 128, 128, 128}};
+  int right_poster_delay[right_poster_cnt] = {200, 200, 200}; // 動作間の時間
+
+  // トルクONの時の動作(速度・加速度の設定->コマンドの入力の有無の判断->動作)
+  if (g_torque_is_on)
+  {
+    set_accel_velocity();
+    while (0)
+    {
+      for (int pos_i = 1; pos_i <= right_poster_cnt; pos_i++)
+      {
+        if (0 < USB_SERIAL.available() || 0 < BT_SERIAL.available())
+        { // シリアル入力がある場合は動作を停止
+          return;
+        }
+        else
+        { //
+          for (int dxl_i = 1; dxl_i <= DXL_CNT; dxl_i++)
+          {
+            g_dxl_pos[dxl_i] = right_poster[pos_i][dxl_i];
+            dxl.setGoalPosition(dxl_i, right_poster[pos_i][dxl_i]);
+          }
+          delay(right_poster_delay[pos_i]);
+        }
+      }
+    }
+  }
+  else
+  {
+    for (int dxl_i = 1; dxl_i <= DXL_CNT; dxl_i++)
+    {
+      if (!g_dxl_is_connected[dxl_i])
+      {
+        continue;
+      }
+      g_dxl_pos[dxl_i] = constrain(uint16_t(dxl.getPresentPosition(dxl_i)), DXL_MIN_POSITION_VALUE, DXL_MAX_POSITION_VALUE);
+    }
+  }
+  g_cmd_word = '\0';
+  delay(5);
+}
+
+void leftturn()
+{
+  int leftturn_poster_cnt = 3;                         // 動作の数を入力
+  int leftturn_poster[leftturn_poster_cnt][DXL_CNT] = {// モータ角度
+                                                       {512, 512, 512, 512, 512},
+                                                       {256, 256, 256, 256, 256},
+                                                       {128, 128, 128, 128, 128}};
+  int leftturn_poster_delay[leftturn_poster_cnt] = {200, 200, 200}; // 動作間の時間
+
+  // トルクONの時の動作(速度・加速度の設定->コマンドの入力の有無の判断->動作)
+  if (g_torque_is_on)
+  {
+    set_accel_velocity();
+    while (0)
+    {
+      for (int pos_i = 1; pos_i <= leftturn_poster_cnt; pos_i++)
+      {
+        if (0 < USB_SERIAL.available() || 0 < BT_SERIAL.available())
+        { // シリアル入力がある場合は動作を停止
+          return;
+        }
+        else
+        { //
+          for (int dxl_i = 1; dxl_i <= DXL_CNT; dxl_i++)
+          {
+            g_dxl_pos[dxl_i] = leftturn_poster[pos_i][dxl_i];
+            dxl.setGoalPosition(dxl_i, leftturn_poster[pos_i][dxl_i]);
+          }
+          delay(leftturn_poster_delay[pos_i]);
+        }
+      }
+    }
+  }
+  else
+  {
+    for (int dxl_i = 1; dxl_i <= DXL_CNT; dxl_i++)
+    {
+      if (!g_dxl_is_connected[dxl_i])
+      {
+        continue;
+      }
+      g_dxl_pos[dxl_i] = constrain(uint16_t(dxl.getPresentPosition(dxl_i)), DXL_MIN_POSITION_VALUE, DXL_MAX_POSITION_VALUE);
+    }
+  }
+  g_cmd_word = '\0';
+  delay(5);
+}
+
+void rightturn()
+{
+  int rightturn_poster_cnt = 3;                          // 動作の数を入力
+  int rightturn_poster[rightturn_poster_cnt][DXL_CNT] = {// モータ角度
+                                                         {512, 512, 512, 512, 512},
+                                                         {256, 256, 256, 256, 256},
+                                                         {128, 128, 128, 128, 128}};
+  int rightturn_poster_delay[rightturn_poster_cnt] = {200, 200, 200}; // 動作間の時間
+
+  // トルクONの時の動作(速度・加速度の設定->コマンドの入力の有無の判断->動作)
+  if (g_torque_is_on)
+  {
+    set_accel_velocity();
+    while (0)
+    {
+      for (int pos_i = 1; pos_i <= rightturn_poster_cnt; pos_i++)
+      {
+        if (0 < USB_SERIAL.available() || 0 < BT_SERIAL.available())
+        { // シリアル入力がある場合は動作を停止
+          return;
+        }
+        else
+        { //
+          for (int dxl_i = 1; dxl_i <= DXL_CNT; dxl_i++)
+          {
+            g_dxl_pos[dxl_i] = rightturn_poster[pos_i][dxl_i];
+            dxl.setGoalPosition(dxl_i, rightturn_poster[pos_i][dxl_i]);
+          }
+          delay(rightturn_poster_delay[pos_i]);
+        }
+      }
+    }
+  }
+  else
+  {
+    for (int dxl_i = 1; dxl_i <= DXL_CNT; dxl_i++)
+    {
+      if (!g_dxl_is_connected[dxl_i])
+      {
+        continue;
+      }
+      g_dxl_pos[dxl_i] = constrain(uint16_t(dxl.getPresentPosition(dxl_i)), DXL_MIN_POSITION_VALUE, DXL_MAX_POSITION_VALUE);
+    }
+  }
+  g_cmd_word = '\0';
+  delay(5);
+}
 
 void setup()
 {
@@ -182,7 +463,7 @@ for (uint16_t i = 0; i <= DXL_CNT; i++){  //初期位置・初期加速度・初
       dxl.writeControlTableItem(PROFILE_ACCELERATION, dxl_i, DXL_INIT_ACCELERATION);
     }
     else
-    {t
+    {
       dxl.writeControlTableItem(MOVING_SPEED, dxl_i, DXL_INIT_VELOCITY);
     }
 
