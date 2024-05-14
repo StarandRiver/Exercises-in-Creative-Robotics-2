@@ -566,10 +566,10 @@ void loop(){
     switch (g_cmd_word){
       case 'i':
         for (int dxl_i = 1; dxl_i <= DXL_CNT; dxl_i++)
-        othermotion();
         {
           g_dxl_pos[dxl_i] = 512;
         }
+        othermotion();
         break;
       case 'f': // g_cmd_args -> { }
         for (int dxl_i = 1; dxl_i <= DXL_CNT; dxl_i++)
@@ -636,22 +636,22 @@ void loop(){
         }
         othermotion();
         break;
-      case 'w';
+      case 'w':
         forward();
         break;
-      case 'a';
+      case 'a':
         left();
         break;
-      case 's';
+      case 's':
         back();
         break;
-      case 'd';
+      case 'd':
         right();
         break;
-      case 'q';
+      case 'q':
         leftturn();
         break;
-      case 'e';
+      case 'e':
         rightturn();
         break;
     }
