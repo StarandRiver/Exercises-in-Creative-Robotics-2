@@ -326,12 +326,9 @@ void leftturn()
     {
       for (int pos_i = 1; pos_i <= leftturn_poster_cnt; pos_i++)
       {
-        if (0 < USB_SERIAL.available() || 0 < BT_SERIAL.available())
-        { // シリアル入力がある場合は動作を停止
+        if (0 < USB_SERIAL.available() || 0 < BT_SERIAL.available()){ // シリアル入力がある場合は動作を停止
           return;
-        }
-        else
-        { //
+        }else{
           for (int dxl_i = 1; dxl_i <= DXL_CNT; dxl_i++)
           {
             g_dxl_pos[dxl_i] = leftturn_poster[pos_i][dxl_i];
@@ -341,9 +338,7 @@ void leftturn()
         }
       }
     }
-  }
-  else
-  {
+  }else{
     for (int dxl_i = 1; dxl_i <= DXL_CNT; dxl_i++)
     {
       if (!g_dxl_is_connected[dxl_i])
@@ -403,6 +398,48 @@ void rightturn()
   }
   g_cmd_word = '\0';
   delay(5);
+}
+
+void othermotion(){
+  if (g_torque_is_on)
+  {
+    for (int dxl_i = 1; dxl_i <= DXL_CNT; dxl_i++)
+    {
+      if (!g_dxl_is_connected[dxl_i])
+      {
+        continue;
+      }
+      if (1.5 <= DXL_PROTOCOL_VERSION)
+      {
+        dxl.writeControlTableItem(PROFILE_VELOCITY, dxl_i, g_dxl_present_velocities[dxl_i]);
+        dxl.writeControlTableItem(PROFILE_ACCELERATION, dxl_i, g_dxl_present_accelerations[dxl_i]);
+      }
+      else
+      {
+        dxl.writeControlTableItem(MOVING_SPEED, dxl_i, g_dxl_present_velocities[dxl_i]);
+      }
+    }
+    for (int dxl_i = 1; dxl_i <= DXL_CNT; dxl_i++)
+    {
+      if (!g_dxl_is_connected[dxl_i])
+      {
+        continue;
+      }
+      dxl.setGoalPosition(dxl_i, g_dxl_pos[dxl_i]);
+    }
+  }
+  else
+  {
+    for (int dxl_i = 1; dxl_i <= DXL_CNT; dxl_i++)
+    {
+      if (!g_dxl_is_connected[dxl_i])
+      {
+        continue;
+      }
+      g_dxl_pos[dxl_i] = constrain(uint16_t(dxl.getPresentPosition(dxl_i)), DXL_MIN_POSITION_VALUE, DXL_MAX_POSITION_VALUE);
+    }
+  }
+  return;
 }
 
 void setup()
@@ -510,4 +547,114 @@ void loop(){
       arg_max_index = readCommand();
     }
   #endif
+    /**
+     * 取得したコマンドによって以下の操作を行う
+     * [i] -> 初期姿勢にする
+     * [f] -> トルクオフ
+     * [n] -> トルクオン
+     * [c] -> モータの速度の設定値を30にする
+     * [v] -> モータの速度の設定値を60にする
+     * [b] -> モータの速度の設定値を100にする
+     * 以下は追加コマンド
+     * [a,POS1,POS2,..., POS_DXL_CNT] -> 全てのモータの位置制御（初期型のmコマンド）
+     * [v,VEL] -> 全てのモータの速度の設定値をVELにする
+     * [v,ID1,VEL1,ID2,VEL2,...] -> 指定したモータ複数の速度設定
+     * [k,ACC] -> 全てのモータの加速度の設定値をACCにする
+     * [k,ID1,ACC1,ID2,ACC2,...] -> 指定したモータ複数の加速度設定
+     * [p] -> モータの現在位置を取得する
+     */
+    switch (g_cmd_word){
+      case 'i':
+        for (int dxl_i = 1; dxl_i <= DXL_CNT; dxl_i++)
+        othermotion();
+        {
+          g_dxl_pos[dxl_i] = 512;
+        }
+        break;
+      case 'f': // g_cmd_args -> { }
+        for (int dxl_i = 1; dxl_i <= DXL_CNT; dxl_i++)
+        {
+          if (!g_dxl_is_connected[dxl_i])
+          {
+            continue;
+          }
+          dxl.torqueOff(dxl_i);
+          g_torque_is_on = false;
+        }
+        othermotion();
+        break;
+      case 'n': // g_cmd_args -> { }
+        for (int dxl_i = 1; dxl_i <= DXL_CNT; dxl_i++)
+        {
+          if (!g_dxl_is_connected[dxl_i])
+          {
+            continue;
+          }
+          dxl.torqueOn(dxl_i);
+          g_torque_is_on = true;
+        }
+        othermotion();
+        break;
+      case 'c': // g_cmd_args -> { }
+        for (int dxl_i = 1; dxl_i <= DXL_CNT; dxl_i++)
+        {
+          g_dxl_present_velocities[dxl_i] = 30;
+        }
+        othermotion();
+        break;
+      case 'v': // g_cmd_args -> { ID1, VEL1, ID2, VEL2, ... }, { VEL } or { }
+        if (1 <= arg_max_index)
+        {
+          for (int arg_i = 0; arg_i < arg_max_index; arg_i += 2)
+          {
+            if (0 < g_cmd_args[arg_i] && g_cmd_args[arg_i] <= DXL_CNT)
+            {
+              g_dxl_present_velocities[g_cmd_args[arg_i]] = g_cmd_args[arg_i + 1];
+            }
+          }
+        }
+        else if (0 == arg_max_index)
+        {
+          for (int dxl_i = 1; dxl_i <= DXL_CNT; dxl_i++)
+          {
+            g_dxl_present_velocities[dxl_i] = g_cmd_args[0];
+          }
+        }
+        else
+        {
+          for (int dxl_i = 1; dxl_i <= DXL_CNT; dxl_i++)
+          {
+            g_dxl_present_velocities[dxl_i] = 60;
+          }
+        }
+        othermotion();
+        break;
+      case 'b': // g_cmd_args -> { }
+        for (int dxl_i = 1; dxl_i <= DXL_CNT; dxl_i++)
+        {
+          g_dxl_present_velocities[dxl_i] = 100;
+        }
+        othermotion();
+        break;
+      case 'w';
+        forward();
+        break;
+      case 'a';
+        left();
+        break;
+      case 's';
+        back();
+        break;
+      case 'd';
+        right();
+        break;
+      case 'q';
+        leftturn();
+        break;
+      case 'e';
+        rightturn();
+        break;
+    }
+    g_cmd_word = '\0';
+    delay(5);
 }
