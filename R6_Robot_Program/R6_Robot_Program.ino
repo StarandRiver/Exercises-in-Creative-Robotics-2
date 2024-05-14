@@ -96,8 +96,28 @@ bool g_dxl_is_connected[DXL_CNT+1];             // Dynamixelが接続されて�
     return -1;
 }
 
+/*Dynamixelの速度，加速度の設定*/
+void set_accel_velocity(){
+
+}
 /*モーションの配置*/
-void forward(){}
+void forward(){
+  int foward_poster_cnt = 3; // 動作の数を入力
+  int foward_poster[foward_poster_cnt][DXL_CNT] = { //モータ角度
+    {512,512,512,512,512},
+    {256,256,256,256,256},
+    {128,128,128,128,128}
+  };
+  int foward_poster_delay[foward_poster_cnt] ={200, 200, 200 }; //動作間の時間
+
+  if(g_torque_is_on)
+  {
+    set_accel_velocity();
+    while( ; ;){
+      
+    }
+  }
+}
 void back(){}
 void left(){}
 void right(){}
@@ -162,7 +182,7 @@ for (uint16_t i = 0; i <= DXL_CNT; i++){  //初期位置・初期加速度・初
       dxl.writeControlTableItem(PROFILE_ACCELERATION, dxl_i, DXL_INIT_ACCELERATION);
     }
     else
-    {
+    {t
       dxl.writeControlTableItem(MOVING_SPEED, dxl_i, DXL_INIT_VELOCITY);
     }
 
