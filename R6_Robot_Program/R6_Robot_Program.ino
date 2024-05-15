@@ -2,15 +2,7 @@
 
 //マイコンごとの設定
 //今回は手元にあるOpenCM・OpenRB・Dynamixel Shieldを使用できるように設定
-#if defined(ARDUINO_AVR_UNO) || defined(ARDUINO_AVR_MEGA2560) // When using DynamixelShield
-  #include <SoftwareSerial.h>
-  SoftwareSerial soft_serial(7, 8); // DYNAMIXELShield UART RX/TX
-  #define DXL_SERIAL Serial
-  #define BT_SERIAL Serial2
-  #define DEBUG_SERIAL soft_serial
-  const int DXL_DIR_PIN = 2;
-  const unsigned long SOFT_BUADRATE = 9600; // ソフトウェアシリアルのボーレート
-#elif defined(ARDUINO_OpenCM904)
+#if defined(ARDUINO_OpenCM904)
   #define DXL_SERIAL Serial3       // OpenCM9.04の拡張ボードのDynamixelとのシリアル通信の設定
   #define USB_SERIAL Serial
   #define BT_SERIAL Serial2
@@ -30,15 +22,15 @@
 /*=================================*/
 
   const uint8_t DXL_CNT = 5;                 // モータの数
-  const uint16_t DXL_INIT_VELOCITY = 100;     // モータの初期速度
-  const uint16_t DXL_INIT_ACCELERATION = 100; // モータの初期加速度
+  const uint16_t DXL_INIT_VELOCITY = 150;     // モータの初期速度
+  const uint16_t DXL_INIT_ACCELERATION = 150; // モータの初期加速度
   const unsigned long USB_BUADRATE = 57600;   // USBのボーレート
   const unsigned long BT_BUADRATE = 57600;    // Bluetoothデバイスのボーレート
 
 #if defined(DXL_AX12A)
   const float DXL_PROTOCOL_VERSION = 1.0; // モータの通信プロトコル
-  const uint16_t DXL_MAX_POSITION_VALUE = 850; // モータの最大値
-  const uint16_t DXL_MIN_POSITION_VALUE = 150; // モータの最小値
+  const uint16_t DXL_MAX_POSITION_VALUE = 1024; // モータの最大値
+  const uint16_t DXL_MIN_POSITION_VALUE = 0; // モータの最小値
   const unsigned long DXL_BUADRATE = 57600;  // Dynamixelのボーレート
 #elif defined(DXL_XC430)
   const float DXL_PROTOCOL_VERSION = 2.0; // モータの通信プロトコル
@@ -119,18 +111,19 @@ void set_accel_velocity(){
 /*モーションの配置*/
 void forward()
 {
-  int forward_poster_cnt = 3;                        // 動作の数を入力
+  int forward_poster_cnt = 4;                        // 動作の数を入力
   int forward_poster[forward_poster_cnt][DXL_CNT] = {// モータ角度
-                                                     {512, 512, 512, 512, 512},
-                                                     {256, 256, 256, 256, 256},
-                                                     {128, 128, 128, 128, 128}};
-  int forward_poster_delay[forward_poster_cnt] = {200, 200, 200}; // 動作間の時間
+                                                     {511,519,187,200,311},
+                                                     {511,861,318,430,311},
+                                                     {489,864,331,361,699},
+                                                     {489,655,169,155,699}};
+  int forward_poster_delay[forward_poster_cnt] = {500, 500, 500, 500}; // 動作間の時間
 
   // トルクONの時の動作(速度・加速度の設定->コマンドの入力の有無の判断->動作)
   if (g_torque_is_on)
   {
     set_accel_velocity();
-    while (0)
+    while (1)
     {
       for (int pos_i = 1; pos_i <= forward_poster_cnt; pos_i++)
       {
@@ -145,8 +138,8 @@ void forward()
             g_dxl_pos[dxl_i] = forward_poster[pos_i][dxl_i];
             dxl.setGoalPosition(dxl_i, forward_poster[pos_i][dxl_i]);
           }
-          delay(forward_poster_delay[pos_i]);
         }
+        delay(forward_poster_delay[pos_i]);
       }
     }
   }
@@ -178,7 +171,7 @@ void back()
   if (g_torque_is_on)
   {
     set_accel_velocity();
-    while (0)
+    while (1)
     {
       for (int pos_i = 1; pos_i <= back_poster_cnt; pos_i++)
       {
@@ -226,7 +219,7 @@ void left()
   if (g_torque_is_on)
   {
     set_accel_velocity();
-    while (0)
+    while (1)
     {
       for (int pos_i = 1; pos_i <= left_poster_cnt; pos_i++)
       {
@@ -274,7 +267,7 @@ void right()
   if (g_torque_is_on)
   {
     set_accel_velocity();
-    while (0)
+    while (1)
     {
       for (int pos_i = 1; pos_i <= right_poster_cnt; pos_i++)
       {
@@ -322,7 +315,7 @@ void leftturn()
   if (g_torque_is_on)
   {
     set_accel_velocity();
-    while (0)
+    while (1)
     {
       for (int pos_i = 1; pos_i <= leftturn_poster_cnt; pos_i++)
       {
@@ -365,7 +358,7 @@ void rightturn()
   if (g_torque_is_on)
   {
     set_accel_velocity();
-    while (0)
+    while (1)
     {
       for (int pos_i = 1; pos_i <= rightturn_poster_cnt; pos_i++)
       {
@@ -450,13 +443,13 @@ for (uint16_t i = 0; i <= DXL_CNT; i++){  //初期位置・初期加速度・初
   g_dxl_pos[i] = 512;
   g_dxl_is_connected[i] = false;
 }
-  #if defined(ARDUINO_AVR_UNO) || defined(ARDUINO_AVR_MEGA2560)
-    DEBUG_SERIAL.begin(SOFT_BUADRATE);
-    BT_SERIAL.begin(BT_BUADRATE);
-  #elif defined(ARDUINO_OpenCM904) || defined(ARDUINO_OpenCR)
     USB_SERIAL.begin(USB_BUADRATE);
     BT_SERIAL.begin(BT_BUADRATE);
-  #endif
+    while (!USB_SERIAL && !BT_SERIAL) {}
+    delay(2000);
+
+    dxl.begin(DXL_BUADRATE);
+    dxl.setPortProtocolVersion(DXL_PROTOCOL_VERSION);
 
   // 誤作動防止のためDynamixelが一つ以上認識されるまで待機する
   uint8_t dxl_id = 1;
@@ -524,18 +517,6 @@ for (uint16_t i = 0; i <= DXL_CNT; i++){  //初期位置・初期加速度・初
 void loop(){
   // シリアル通信によりコマンドの取得を行う
   int8_t arg_max_index = -1;
-  #if defined(ARDUINO_AVR_UNO) || defined(ARDUINO_AVR_MEGA2560)
-    if (0 < BT_SERIAL.available())
-    {
-      g_read_line = BT_SERIAL.readStringUntil('\n');
-      arg_max_index = readCommand();
-    }
-    else if (0 < DEBUG_SERIAL.available())
-    {
-      g_read_line = DEBUG_SERIAL.readStringUntil('\n');
-      arg_max_index = readCommand();
-    }
-  #elif defined(ARDUINO_OpenCM904) || defined(ARDUINO_OpenRB)
     if (0 < USB_SERIAL.available())
     {
       g_read_line = USB_SERIAL.readStringUntil('\n');
@@ -546,7 +527,6 @@ void loop(){
       g_read_line = BT_SERIAL.readStringUntil('\n');
       arg_max_index = readCommand();
     }
-  #endif
     /**
      * 取得したコマンドによって以下の操作を行う
      * [i] -> 初期姿勢にする
@@ -654,6 +634,33 @@ void loop(){
       case 'e':
         rightturn();
         break;
+      case 'p': // g_cmd_args -> { }
+            {
+                String dxl_pos_msg = "[";
+                for (int dxl_i = 1; dxl_i <= DXL_CNT; dxl_i++)
+                {
+                    if (g_dxl_is_connected[dxl_i])
+                    {
+                        dxl_pos_msg += String(uint16_t(dxl.getPresentPosition(dxl_i)));
+                    }
+                    else
+                    {
+                        dxl_pos_msg += "-1";
+                    }
+                    if (dxl_i < DXL_CNT)
+                    {
+                        dxl_pos_msg += ",";
+                    }
+                }
+                dxl_pos_msg += "]";
+                USB_SERIAL.println(dxl_pos_msg);
+                BT_SERIAL.println(dxl_pos_msg);
+                USB_SERIAL.flush();
+                BT_SERIAL.flush();
+                break;
+            }
+        default:
+            break;
     }
     g_cmd_word = '\0';
     delay(5);
