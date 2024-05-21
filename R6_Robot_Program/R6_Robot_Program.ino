@@ -8,8 +8,8 @@
   #define BT_SERIAL Serial2
     const int DXL_DIR_PIN = 22;
   const bool SENSOR_IS_AVAILABLE = false;
-#elif defined(ARDUINO_OpenCR)
-  #define DXL_SERIAL Serial3
+#elif defined(ARDUINO_OpenRB)
+  #define DXL_SERIAL Serial1
   #define USB_SERIAL Serial
   #define BT_SERIAL Serial2
   const int DXL_DIR_PIN = -1;
@@ -17,13 +17,13 @@
 #endif
 
 /*======使用するモーターを選択======*/
-#define DXL_AX12A
-//#define DXL_XC430
+//#define DXL_AX12A
+#define DXL_XC430
 /*=================================*/
 
-  const uint8_t DXL_CNT = 5;                 // モータの数
-  const uint16_t DXL_INIT_VELOCITY = 150;     // モータの初期速度
-  const uint16_t DXL_INIT_ACCELERATION = 150; // モータの初期加速度
+  const uint8_t DXL_CNT = 14;                 // モータの数
+  const uint16_t DXL_INIT_VELOCITY = 350;     // モータの初期速度
+  const uint16_t DXL_INIT_ACCELERATION =350; // モータの初期加速度
   const unsigned long USB_BUADRATE = 57600;   // USBのボーレート
   const unsigned long BT_BUADRATE = 57600;    // Bluetoothデバイスのボーレート
 
@@ -34,8 +34,8 @@
   const unsigned long DXL_BUADRATE = 57600;  // Dynamixelのボーレート
 #elif defined(DXL_XC430)
   const float DXL_PROTOCOL_VERSION = 2.0; // モータの通信プロトコル
-  const uint16_t DXL_MAX_POSITION_VALUE = 850; // モータの最大値
-  const uint16_t DXL_MIN_POSITION_VALUE = 150; // モータの最小値
+  const uint16_t DXL_MAX_POSITION_VALUE = 4096; // モータの最大値
+  const uint16_t DXL_MIN_POSITION_VALUE = 0; // モータの最小値
   const unsigned long DXL_BUADRATE = 1000000;  // Dynamixelのボーレート
 #endif
 
@@ -111,13 +111,12 @@ void set_accel_velocity(){
 /*モーションの配置*/
 void forward()
 {
-  int forward_poster_cnt = 4;                        // 動作の数を入力
+  int forward_poster_cnt = 3;                        // 動作の数を入力
   int forward_poster[forward_poster_cnt][DXL_CNT] = {// モータ角度
-                                                     {511,519,187,200,311},
-                                                     {511,861,318,430,311},
-                                                     {489,864,331,361,699},
-                                                     {489,655,169,155,699}};
-  int forward_poster_delay[forward_poster_cnt] = {500, 500, 500, 500}; // 動作間の時間
+                                                     {1024,2350,1259,3072,2350,1259,3072,1575,2736,1024,1575,2736,1668,1642},
+                                                     {1024,2035,1099,3072,2035,1099,3072,1567,2910,1024,1567,2910,1844,1820},
+                                                     {1024,1987,3188,3072,2025,2835,3072,2346,2096,1024,2296,2244,2258,2233}};
+  int forward_poster_delay[forward_poster_cnt] = {100, 100, 100}; // 動作間の時間
 
   // トルクONの時の動作(速度・加速度の設定->コマンドの入力の有無の判断->動作)
   if (g_torque_is_on)
@@ -160,13 +159,12 @@ void forward()
 
 void back()
 {
-  int back_poster_cnt = 4;                        // 動作の数を入力
+  int back_poster_cnt = 3;                        // 動作の数を入力
   int back_poster[back_poster_cnt][DXL_CNT] = {// モータ角度
-                                                     {511,519,187,200,311},
-                                                     {511,861,318,430,311},
-                                                     {489,864,331,361,699},
-                                                     {489,655,169,155,699}};
-  int back_poster_delay[back_poster_cnt] = {500, 500, 500, 500}; // 動作間の時間
+                                                     {1002,2037,1852,2955,1931,1935,3070,1366,3405,1004,1357,3412,1700,1674},
+                                                     {1006,2053,1208,2982,2034,1235,3039,1954,2004,1005,1867,2189,1702,1677},
+                                                     {1002,2164,1885,2983,2069,2123,3039,1973,2002,1006,1846,2221,2029,2002}};
+  int back_poster_delay[back_poster_cnt] = {200, 200, 200}; // 動作間の時間
 
   // トルクONの時の動作(速度・加速度の設定->コマンドの入力の有無の判断->動作)
   if (g_torque_is_on)
@@ -400,7 +398,7 @@ void rightturn()
       {
         continue;
       }
-      g_dxl_pos[dxl_i] = constrain(uint16_t(dxl.getPresentPosition(dxl_i-1)), DXL_MIN_POSITION_VALUE, DXL_MAX_POSITION_VALUE);
+      g_dxl_pos[dxl_i] = constrain(uint16_t(dxl.getPresentPosition(dxl_i)), DXL_MIN_POSITION_VALUE, DXL_MAX_POSITION_VALUE);
     }
   }
   g_cmd_word = '\0';
@@ -455,7 +453,11 @@ void setup()
 for (uint16_t i = 0; i <= DXL_CNT; i++){  //初期位置・初期加速度・初期速度を各モータの要素に代入
   g_dxl_present_velocities[i] = DXL_INIT_VELOCITY;
   g_dxl_present_accelerations[i] = DXL_INIT_ACCELERATION;
-  g_dxl_pos[i] = 512;
+  #if defined(DXL_AX12A)
+    g_dxl_pos[i] = 512;
+  #elif defined(DXL_XC430)
+    g_dxl_pos[i] = 2048;
+  #endif
   g_dxl_is_connected[i] = false;
 }
     USB_SERIAL.begin(USB_BUADRATE);
@@ -562,7 +564,11 @@ void loop(){
       case 'i':
         for (int dxl_i = 1; dxl_i <= DXL_CNT; dxl_i++)
         {
-          g_dxl_pos[dxl_i] = 512;
+          #if defined(DXL_AX12A)
+            g_dxl_pos[dxl_i] = 512;
+            #elif defined(DXL_XC430)
+            g_dxl_pos[dxl_i] = 2048;
+            #endif
         }
         othermotion();
         break;
