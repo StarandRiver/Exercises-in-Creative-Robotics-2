@@ -210,10 +210,10 @@ void left()
 {
   int left_poster_cnt = 3;                     // 動作の数を入力
   int left_poster[left_poster_cnt][DXL_CNT] = {// モータ角度
-                                               {600, 2449, 835, 2500, 2449, 835, 750, 1866, 1162, 2852, 1866, 1162, 2340, 2340},
-                                               {600, 2196, 1096, 2500, 2196, 1096, 750, 3159, 1227, 2852, 3159, 1227, 1623, 1623},
-                                               {600, 2196, 1096, 2500, 2196, 1096, 750, 3159, 1227, 2852, 3159, 1227, 2048, 2048}};
-  int left_poster_delay[left_poster_cnt] = {200, 200, 200}; // 動作間の時間
+                                                     {1024, 2449, 835, 3072, 2449, 835, 1024, 1866, 1162, 3072, 1866, 1162, 2340, 2340},
+                                                     {1024, 2196, 1096, 3072, 2196, 1096, 1024, 3159, 1227, 3072, 3159, 1227, 1923, 1923},
+                                                     {1024, 2196, 1096, 3072, 2196, 1096, 1024, 3159, 1227, 3072, 3159, 1227, 2340, 2340}};
+  int left_poster_delay[left_poster_cnt] = {250,250, 250}; // 動作間の時間
 
   // トルクONの時の動作(速度・加速度の設定->コマンドの入力の有無の判断->動作)
   if (g_torque_is_on)
@@ -567,16 +567,17 @@ void loop()
   switch (g_cmd_word)
   {
   case 'i':
-    for (int dxl_i = 1; dxl_i <= DXL_CNT; dxl_i++)
-    {
+      for (int dxl_i = 1; dxl_i <= DXL_CNT; dxl_i++)
+      {
 #if defined(DXL_AX12A)
-      g_dxl_pos[dxl_i] = 512;
+        g_dxl_pos[dxl_i] = 512;
 #elif defined(DXL_XC430)
-      g_dxl_pos[dxl_i] = 2048;
+        int normal_position[14] = {1024, 3159, 1227, 3072, 3159, 1227, 1024, 1345, 2577, 3072, 1345, 2577, 1623, 1623};
+        g_dxl_pos[dxl_i] = normal_position[dxl_i - 1];
 #endif
-    }
-    othermotion();
-    break;
+      }
+      othermotion();
+      break;
   case 'f': // g_cmd_args -> { }
     for (int dxl_i = 1; dxl_i <= DXL_CNT; dxl_i++)
     {
