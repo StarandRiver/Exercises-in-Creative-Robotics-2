@@ -23,3 +23,5 @@
   - back_top_Plate.pdf
   - Front_bottom_Plate.pdf
   - Front_top_Plate.pdf
+## 完成イメージ
+![Robot_model](https://github.com/user-attachments/assets/ac4da6d0-3fe9-47ce-8da2-83af7d209cd1)
