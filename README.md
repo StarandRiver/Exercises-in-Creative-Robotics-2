@@ -18,7 +18,7 @@
   - 回路図.pdf  ←コントローラの回路図
   - 配線図.png  ←ユニバーサル基板の配線図
 * robot_v2_asm.stp  ←ロボットの3Dモデル(STEP形式)
-*drawing  ←フレームの図面
+* drawing  ←フレームの図面
   - back_bottom_Plate.pdf
   - back_top_Plate.pdf
   - Front_bottom_Plate.pdf
